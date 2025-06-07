@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>新增学生</title>
+    <style>
+        /* 整体页面基础样式设置 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* 标题样式 */
+        h2 {
+            color: #343a40;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* 表单样式 */
+        form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 段落（每个输入项所在的p标签）样式 */
+        p {
+            margin-bottom: 15px;
+        }
+
+        /* 输入框通用样式 */
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #80bdff;
+            outline: none;
+        }
+
+        /* 提交按钮样式 */
+        input[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+
+        p.error {
+            color: red;
+            margin-top: 10px;
+        }
+
+        /* 批量添加文本域样式 */
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 3px;
+            box-sizing: box-sizing="border-box";
+            resize: vertical;
+        }
+
+    </style>
+</head>
+
+<body>
+<h2>新增学生</h2>
+<form th:action="@{/student/add}" th:object="${student}" id="studentForm" method="POST">
+    <!-- 单个学生信息输入 -->
+    <p>
+        学号: <input type="text" th:field="*{studentNo}" placeholder="请输入学号" />
+        <span class="field-error" style="color: red; display: none;"></span>
+    </p>
+    <p>
+        姓名: <input type="text" th:field="*{name}" placeholder="请输入姓名" />
+        <span class="field-error" style="color: red; display: none;"></span>
+    </p>
+    <p>
+        班级: <input type="text" th:field="*{className}" placeholder="请输入班级" />
+        <span class="field-error" style="color: red; display: none;"></span>
+    </p>
+    <p>
+        年龄: <input type="text" th:field="*{age}" placeholder="请输入年龄" />
+        <span class="field-error" style="color: red; display: none;"></span>
+    </p>
+    <input type="submit" value="单个添加" id="singleAddButton" />
+
+    <!-- 批量添加相关 -->
+    <p>
+        批量添加（每行按“学号,姓名,班级,年龄”格式输入，示例：001,张三,一班,20）：
+        <textarea id="batchInput" placeholder="请按格式输入多行学生信息" name='students'></textarea>
+    </p>
+    <input type="submit" value="批量添加" id="batchAddButton" />
+
+    <p class="error" id="errorMsg" th:text="${error}"></p>
+</form>
+<br>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const studentForm = document.getElementById('studentForm');
+        const singleAddButton = document.getElementById('singleAddButton');
+        const batchAddButton = document.getElementById('batchAddButton');
+        const errorMsg = document.getElementById('errorMsg');
+
+        // 单个添加按钮点击事件处理
+        singleAddButton.addEventListener('click', function (e) {
+            e.preventDefault();
+            const inputs = studentForm.querySelectorAll('input[type="text"]');
+            let isValid = true;
+            inputs.forEach(input => {
+                if (input.value.trim() === "") {
+                    const errorSpan = input.nextElementSibling;
+                    if (errorSpan && errorSpan.classList.contains('field-error')) {
+                        errorSpan.style.display = 'inline';
+                        errorSpan.textContent = '该项不能为空';
+                    }
+                    isValid = false;
+                }
+            });
+            if (isValid) {
+                studentForm.submit();
+            }
+        });
+
+        // 批量添加按钮点击事件处理
+        batchAddButton.addEventListener('click', function (e) {
+            e.preventDefault();
+            const batchInput = document.getElementById('batchInput');
+            const lines = batchInput.value.split('\n');
+            const students = [];
+            for (let i = 0; i < lines.length; i++) {
+                const fields = lines[i].split(',');
+                if (fields.length === 4) {
+                    let ageValue;
+                    try {
+                        ageValue = Number(fields[3].trim());
+                    } catch (error) {
+                        errorMsg.textContent = "批量添加信息中存在年龄格式错误，请检查后重新输入";
+                        return;
+                    }
+                    const student = {
+                        studentNo: fields[0].trim(),
+                        name: fields[1].trim(),
+                        className: fields[2].trim(),
+                        age: ageValue
+                    };
+                    students.push(student);
+                }
+            }
+            if (students.length > 0) {
+                const formData = new FormData();
+                students.forEach((student, index) => {
+                    formData.append(`students[${index}].studentNo`, student.studentNo);
+                    formData.append(`students[${index}].name`, student.name);
+                    formData.append(`students[${index}].className`, student.className);
+                    formData.append(`students[${index}].age`, student.age);
+                });
+                studentForm.setAttribute('action', th:action="@{/student/add}");
+                studentForm.submit();
+            } else {
+                errorMsg.textContent = "请按正确格式输入批量学生信息";
+            }
+        });
+    });
+</script>
+</body>
+
+</html>

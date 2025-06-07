@@ -1,0 +1,19 @@
+<component name="libraryTable">
+  <library name="sqljdbc_12.8.1.0_chs">
+    <CLASSES>
+      <root url="jar://D:/sqljdbc_12.8.1.0_chs.zip!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://D:/sqljdbc_12.8.1.0_chs.zip!/sqljdbc_12.8/chs/samples/adaptive" />
+      <root url="jar://D:/sqljdbc_12.8.1.0_chs.zip!/sqljdbc_12.8/chs/samples/alwaysencrypted" />
+      <root url="jar://D:/sqljdbc_12.8.1.0_chs.zip!/sqljdbc_12.8/chs/samples/azureactivedirectoryauthentication" />
+      <root url="jar://D:/sqljdbc_12.8.1.0_chs.zip!/sqljdbc_12.8/chs/samples/connections" />
+      <root url="jar://D:/sqljdbc_12.8.1.0_chs.zip!/sqljdbc_12.8/chs/samples/constrained" />
+      <root url="jar://D:/sqljdbc_12.8.1.0_chs.zip!/sqljdbc_12.8/chs/samples/dataclassification" />
+      <root url="jar://D:/sqljdbc_12.8.1.0_chs.zip!/sqljdbc_12.8/chs/samples/datatypes" />
+      <root url="jar://D:/sqljdbc_12.8.1.0_chs.zip!/sqljdbc_12.8/chs/samples/resultsets" />
+      <root url="jar://D:/sqljdbc_12.8.1.0_chs.zip!/sqljdbc_12.8/chs/samples/sparse" />
+    </SOURCES>
+  </library>
+</component>

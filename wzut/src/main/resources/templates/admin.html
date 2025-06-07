@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.4.0/wavesurfer.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.4.0/wavesurfer.min.js"></script>
+
+<head>
+    <meta charset="UTF-8">
+    <title>管理员界面</title>
+<style>
+    /* 页面整体样式 */
+    body {
+        position: relative;
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+    }
+
+    /* 主要容器元素样式，确保显示在视频之上 */
+  .wavesurfer-container,
+  .header,
+  .search-form,
+  .table-container {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* 链接样式 */
+    a {
+        text-decoration: none;
+        color: #007bff;
+        padding: 5px 10px;
+        border-radius: 3px;
+        transition: background-color 0.3s ease;
+    }
+
+    a:hover {
+        background-color: #007bff;
+        color: white;
+    }
+
+    /* 表单样式 */
+    form {
+        margin-bottom: 15px;
+    }
+
+    input[type="text"] {
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        color: #888;
+        font-style: italic;
+    }
+
+    input[type="submit"] {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+    /* 表格样式 */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: transparent;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    th,
+    td {
+        padding: 8px;
+        text-align: center;
+        border: 1px solid #ccc;
+        background-color: transparent;
+    }
+
+    tr:nth-child(even) {
+        background-color: transparent;
+    }
+
+    thead {
+        color: white;
+        background-color: transparent;
+    }
+
+    th {
+        font-weight: bold;
+        color: red;
+    }
+
+    /* 布局相关样式 */
+  .header,
+  .search-form {
+        display: flex;
+        align-items: center;
+    }
+
+    /* 针对header类，将背景改为透明 */
+  .header {
+        display: flex;
+        align-items: center;
+        background-color: transparent;
+        grid-area: header;
+    }
+
+    /* 针对search-form类，将背景改为透明 */
+  .search-form {
+        display: flex;
+        align-items: center;
+        background-color: transparent;
+        grid-area: search;
+    }
+
+    /* 针对table-container类，将背景改为透明 */
+  .table-container {
+        background-color: transparent;
+        grid-area: table;
+    }
+
+    /* 针对wavesurfer-container类，将背景改为透明 */
+  .wavesurfer-container {
+        width: 400px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 0 auto;
+        grid-area: audio;
+        background-color: transparent;
+    }
+
+   .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 15px;
+    }
+
+   .pagination a {
+        padding: 8px 16px;
+        margin: 0 4px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        cursor: pointer;
+    }
+
+   .pagination a.active {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+   .pagination-input {
+        width: 50px;
+        margin: 0 10px;
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        text-align: center;
+    }
+
+
+    /* 视频样式及布局调整，使用grid布局来排列视频 */
+    video {
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+        z-index: -1;
+    }
+
+    .video-container {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr); /* 创建5列，平均分配空间 */
+        grid-gap: 5px; /* 视频之间的间隔 */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* 新添加的播放区域整体样式，调整布局使其更合理显示 */
+    .main-play-area {
+    margin: 20px auto; /* 上下外边距20px，使其与上下部分有间距，水平居中 */
+    width: 80%; /* 宽度占页面宽度的80%，可根据实际需求调整大小 */
+    max-width: 800px; /* 最大宽度限制为800px，避免在大屏幕上过度拉伸 */
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); /* 添加一个淡淡的阴影，使其更突出显示，可按需调整或删除 */
+    border-radius: 5px; /* 给播放区域添加圆角，美化外观，可按需调整 */
+    }
+
+    /* 新播放区域内视频元素的样式，确保视频按比例填充并显示正常 */
+    #main-play-video {
+    width: 100%;
+    height: auto;
+    }
+    /* 音乐标题样式 */
+    .audio-title {
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    /* 播放列表样式 */
+    .playlist {
+        list-style: none;
+        padding: 0;
+        text-align: center;
+    }
+
+    .playlist li {
+        cursor: pointer;
+        padding: 5px;
+        border-radius: 3px;
+        margin-bottom: 5px;
+        color: #007bff;
+        transition: background-color 0.3s ease;
+    }
+
+    .playlist li:hover {
+        background-color: #007bff;
+        color: white;
+    }
+
+    /* 控制按钮样式 */
+    .control-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        margin-right: 5px;
+    }
+
+    /* 音量调节滑块样式 */
+    #volumeSlider {
+        width: 100%;
+        margin-top: 5px;
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: #ccc;
+        height: 4px;
+    }
+
+    #volumeSlider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #007bff;
+        cursor: pointer;
+    }
+
+    #volumeSlider::-moz-range-thumb {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #007bff;
+        cursor: pointer;
+    }
+
+</style></head>
+<body>
+<!-- 多个视频元素包裹在新容器中，使用grid布局排列 -->
+<div class="video-container">
+    <video id="video1" src="/Video/烟菲.MP4" muted autoplay loop></video>
+    <video id="video2" src="/Video/流萤烟火.MP4" muted autoplay loop></video>
+    <video id="video3" src="/Video/爷与流萤.MP4" muted autoplay loop></video>
+    <video id="video4" src="/Video/胡桃.MP4" muted autoplay loop></video>
+    <video id="video5" src="/Video/知更鸟.MP4" muted autoplay loop></video>
+</div>
+
+
+<div class="wavesurfer-container">
+    <h3 class="audio-title"></h3>
+    <ul class="playlist"></ul>
+    <button class="control-button" id="playButton">播放</button>
+    <button class="control-button" id="pauseButton">暂停</button>
+    <input type="range" id="volumeSlider" min="0" max="1" step="0.01" value="0.5">
+</div>
+<div class="main-play-area">
+    <video id="main-play-video" muted autoplay loop></video>
+</div>
+<div class="header">
+<a th:href="@{/register}" href="#">去注册用户</a>
+</div>
+<div class="header">
+    <a th:href="@{/admin/add}">新增用户</a> &nbsp;
+</div>
+
+<div class="search-form">
+    <form th:action="@{/admin/search}" method="POST">
+        <input type="text" name="text" placeholder="输入id或用户名">
+        <input type="submit" value="查询">
+    </form>
+</div>
+
+<div class="table-container">
+    <table border="1" id="studentTable">
+        <thead>
+        <tr>
+            <th>id</th>
+            <th>用户名</th>
+            <th>密码</th>
+            <th>身份</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody id="studentTableBody">
+        <tr th:each="user: ${userList}">
+            <td th:text="${user.id}"></td>
+            <td th:text="${user.Username}"></td>
+            <td th:text="${user.password}"></td>
+            <td th:text="${user.identity}"></td>
+            <td>
+                <a th:href="@{/admin/delete(id=${user.id})}">删除</a>
+                <a th:href="@{/admin/edit{id}(id=${user.id})}">编辑</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div class="pagination" id="pagination"></div>
+</div>
+
+
+
+<script>
+        // 每页显示的学生数量
+    const studentsPerPage = 10;
+    let currentPage = 1;
+
+    function renderPagination() {
+        const totalPages = Math.ceil(Array.from(document.querySelectorAll('tr')).length / studentsPerPage);
+        const paginationDiv = document.getElementById('pagination');
+        paginationDiv.innerHTML = '';
+
+        // 添加“上一页”按钮
+        const prevLink = document.createElement('a');
+        prevLink.href = "#";
+        prevLink.textContent = "上一页";
+        prevLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (currentPage > 1) {
+                currentPage--;
+                updatePage();
+            }
+        });
+        paginationDiv.appendChild(prevLink);
+
+        for (let i = 1; i <= totalPages; i++) {
+            const link = document.createElement('a');
+            link.href = "#";
+            link.textContent = i;
+            if (i === currentPage) {
+                link.classList.add('active');
+            }
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                currentPage = parseInt(this.textContent);
+                updatePage();
+            });
+            paginationDiv.appendChild(link);
+        }
+
+        // 添加“下一页”按钮
+        const nextLink = document.createElement('a');
+        nextLink.href = "#";
+        nextLink.textContent = "下一页";
+        nextLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (currentPage < totalPages) {
+                currentPage++;
+                updatePage();
+            }
+        });
+        paginationDiv.appendChild(nextLink);
+
+        // 添加输入页码跳转的输入框及按钮
+        const input = document.createElement('input');
+        input.type = "text"
+        input.classList.add('pagination-input');
+        const goButton = document.createElement('input');
+        goButton.type = "button";
+        goButton.value = "Go";
+        goButton.addEventListener('click', function () {
+            const inputPage = parseInt(input.value);
+            if (!isNaN(inputPage) && inputPage >= 1 && inputPage <= totalPages) {
+                currentPage = inputPage;
+                updatePage();
+            }
+        });
+        paginationDiv.appendChild(input);
+        paginationDiv.appendChild(goButton);
+    }
+
+    function updatePage() {
+        const tableRows = document.querySelectorAll('tr');
+        const startIndex = (currentPage - 1) * studentsPerPage;
+        const endIndex = startIndex + studentsPerPage;
+        for (let j = 0; j < tableRows.length; j++) {
+            if (j >= startIndex && j < endIndex) {
+                tableRows[j].style.display = '';
+            } else {
+                tableRows[j].style.display = 'none';
+            }
+        }
+        renderPagination();
+    }
+
+    window.onload = function () {
+            const tableRows = document.querySelectorAll('tr');
+            const startIndex = (currentPage - 1) * studentsPerPage;
+            const endIndex = startIndex + studentsPerPage;
+            for (let j = 0; j < tableRows.length; j++) {
+                if (j >= startIndex && j < endIndex) {
+                    tableRows[j].style.display = '';
+                } else {
+                    tableRows[j].style.display = 'none';
+                }
+            }
+            renderPagination();
+        }
+// 音乐列表，可根据实际情况添加更多音乐信息（标题和文件路径）
+const musicList = [
+    {
+        title: "知更鸟 - HOYO-MiX - Chevy",
+        url: "/Music/知更鸟 _ HOYO-MiX _ Chevy - 希望有羽毛和翅膀.ogg"
+    },
+    {
+        title: "小七同学（原神） - Missing Heartbeat",
+        url: "/Music/小七同学（原神） - Missing Heartbeat.mp3"
+    },
+     {
+        title: "知更鸟 _ HOYO-MiX _ Chevy - 使一颗心免于哀伤",
+        url: "/Music/知更鸟 _ HOYO-MiX _ Chevy - 使一颗心免于哀伤.ogg"
+    },
+    {
+        title: "Ice Paper - 心如止水",
+        url: "/Music/Ice Paper - 心如止水.mp3"
+    },
+    {
+        title: "音乐5",
+        url: "/Music/知更鸟 _ HOYO-MiX _ Chevy - 希望有羽毛和翅膀.ogg"
+    }
+];
+
+// 获取所有视频元素，存放在数组中方便后续操作
+const videos = [
+    document.getElementById('video1'),
+    document.getElementById('video2'),
+    document.getElementById('video3'),
+    document.getElementById('video4'),
+    document.getElementById('video5')
+];
+let currentVideoIndex = 0; // 当前播放视频的索引，初始化为0，对应第一个视频
+let currentIndex = 0; // 当前播放音乐的索引
+const container = document.querySelector('.wavesurfer-container');
+const audioTitle = document.querySelector('.audio-title');
+const playlist = document.querySelector('.playlist');
+const playButton = document.getElementById('playButton');
+const pauseButton = document.getElementById('pauseButton');
+let wavesurfer;
+
+// 初始化音频播放器，设置相关属性并添加播放、暂停、播放完成等事件监听
+function initPlayer() {
+    wavesurfer = WaveSurfer.create({
+        container: container,
+        waveColor: 'violet',
+        progressColor: 'blue',
+        url: musicList[currentIndex].url
+    });
+    wavesurfer.on('play', function () {
+    console.log('音频开始播放');
+    // 音频播放时，同步播放对应的视频（视频保持静音）
+    if (currentVideoIndex >= 0 && currentVideoIndex < videos.length) {
+        videos[currentVideoIndex].play().catch(function (error) {
+            console.error("视频播放出错：", error);
+            alert("视频播放出现问题，请检查视频文件或网络连接！");
+        });
+        videos[currentVideoIndex].muted = true;
+
+        // 新增代码，设置新播放区域视频的src属性与当前播放视频一致，并播放
+        const mainPlayVideo = document.getElementById('main-play-video');
+        mainPlayVideo.src = videos[currentVideoIndex].src;
+        mainPlayVideo.play();
+    } else {
+        console.error("视频索引超出范围，无法正确播放视频");
+    }
+});
+
+
+    wavesurfer.on('pause', function () {
+        console.log('音频暂停播放');
+    });
+
+    wavesurfer.on('finish', function () {
+        // 播放完成后，切换到下一首音乐
+        currentIndex = (currentIndex + 1) % musicList.length;
+        playSelectedMusic();
+
+        // 同步切换视频（视频保持静音）
+        currentVideoIndex = (currentVideoIndex + 1) % videos.length;
+        updateVideoStates();
+    });
+}
+
+// 更新所有视频的播放、暂停、静音状态，根据当前视频索引来控制
+function updateVideoStates() {
+for (let i = 0; i < videos.length; i++) {
+    if (i === currentVideoIndex) {
+        videos[i].muted = false;
+        videos[i].play();
+
+        // 新增代码，同步更新新播放区域视频的src属性与当前播放视频一致，并播放
+        const mainPlayVideo = document.getElementById('main-play-video');
+        mainPlayVideo.src = videos[i].src;
+        mainPlayVideo.play();
+    } else {
+        videos[i].muted = true;
+        videos[i].pause();
+    }
+}
+}
+
+// 暂停按钮点击事件处理函数，暂停音频播放并同步暂停对应的视频
+function pauseButtonClickHandler() {
+    wavesurfer.pause();
+    // 同时暂停对应的视频
+    videos[currentVideoIndex].pause();
+     // 新增代码，暂停新播放区域的视频
+const mainPlayVideo = document.getElementById('main-play-video');
+mainPlayVideo.pause();
+}
+
+// 暂停按钮添加点击事件监听器
+pauseButton.addEventListener('click', pauseButtonClickHandler);
+
+// 更新播放列表，根据音乐列表动态生成播放列表项，并添加点击事件监听器用于切换音乐
+function updatePlaylist() {
+    // 清空播放列表
+    playlist.innerHTML = '';
+    musicList.forEach((music, index) => {
+        const listItem = document.createElement('li');
+        listItem.textContent = music.title;
+        listItem.addEventListener('click', function () {
+            currentIndex = index;
+            // 根据所选音乐的索引来更新当前视频索引，确保一一对应
+            currentVideoIndex = index % videos.length;
+            playSelectedMusic();
+        });
+        playlist.appendChild(listItem);
+    });
+}
+
+// 播放选中音乐的函数，更新音乐标题显示，加载并播放音频，同步控制对应的视频播放（保持视频静音）
+function playSelectedMusic() {
+    audioTitle.textContent = musicList[currentIndex].title;
+    wavesurfer.load(musicList[currentIndex].url);
+    wavesurfer.play();
+
+    // 同步视频播放，始终保持视频静音
+    updateVideoStates();
+}
+
+// 初始化音频播放器、更新播放列表，并初始播放第一首音乐
+initPlayer();
+updatePlaylist();
+playSelectedMusic();
+
+// 播放按钮点击事件处理函数，触发音频播放
+function playButtonClickHandler() {
+    wavesurfer.play();
+}
+
+// 播放按钮添加点击事件监听器
+playButton.addEventListener('click', playButtonClickHandler);
+
+// 添加切换上一首音乐按钮，点击时切换到上一首音乐并播放
+const prevButton = document.createElement('button');
+prevButton.textContent = '上一首';
+prevButton.addEventListener('click', function () {
+    currentIndex = (currentIndex - 1 + musicList.length) % musicList.length;
+    // 根据音乐索引切换来同步更新视频索引，确保视频与音乐对应
+    currentVideoIndex = (currentVideoIndex - 1 + videos.length) % videos.length;
+    playSelectedMusic();
+});
+container.appendChild(prevButton);
+
+// 添加切换下一首音乐按钮，点击时切换到下一首音乐并播放
+const nextButton = document.createElement('button');
+nextButton.textContent = '下一首';
+nextButton.addEventListener('click', function () {
+    currentIndex = (currentIndex + 1) % musicList.length;
+    // 根据音乐索引切换来同步更新视频索引，确保视频与音乐对应
+    currentVideoIndex = (currentVideoIndex + 1) % videos.length;
+    playSelectedMusic();
+});
+container.appendChild(nextButton);
+
+// 获取音量调节滑块元素
+const volumeSlider = document.getElementById('volumeSlider');
+
+// 为音量调节滑块添加change事件监听器，当滑块值改变时调节音频音量
+volumeSlider.addEventListener('change', function () {
+    const volume = this.value;
+    wavesurfer.setVolume(volume);
+});
+
+// 为音量调节滑块添加input事件监听器，在拖动滑块过程中实时调节音频音量
+volumeSlider.addEventListener('input', function () {
+    const volume = this.value;
+    wavesurfer.setVolume(volume);
+});
+</script>
+</body>
+
+</html>

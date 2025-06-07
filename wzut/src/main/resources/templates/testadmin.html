@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>首页</title>
+    <style>
+        /* 页面整体样式 */
+        body {
+            position: relative;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 主要容器元素样式，确保显示在视频之上 */
+      .wavesurfer-container,
+      .header,
+      .search-form,
+      .table-container {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 链接样式 */
+        a {
+            text-decoration: none;
+            color: #007bff;
+            padding: 5px 10px;
+            border-radius: 3px;
+            transition: background-color 0.3s ease;
+        }
+
+        a:hover {
+            background-color: #007bff;
+            color: white;
+        }
+
+        /* 表单样式 */
+        form {
+            margin-bottom: 15px;
+        }
+
+        input[type="text"] {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            color: #888;
+            font-style: italic;
+        }
+
+        input[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        /* 表格样式 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: transparent;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ccc;
+            background-color: transparent;
+        }
+
+        tr:nth-child(even) {
+            background-color: transparent;
+        }
+
+        thead {
+            color: white;
+            background-color: transparent;
+        }
+
+        th {
+            font-weight: bold;
+            color: red;
+        }
+
+        /* 布局相关样式 */
+      .header,
+      .search-form {
+            display: flex;
+            align-items: center;
+        }
+
+        /* 针对header类，将背景改为透明 */
+      .header {
+            display: flex;
+            align-items: center;
+            background-color: transparent;
+            grid-area: header;
+        }
+
+        /* 针对search-form类，将背景改为透明 */
+      .search-form {
+            display: flex;
+            align-items: center;
+            background-color: transparent;
+            grid-area: search;
+        }
+
+        /* 针对table-container类，将背景改为透明 */
+      .table-container {
+            background-color: transparent;
+            grid-area: table;
+        }
+
+        /* 针对wavesurfer-container类，将背景改为透明 */
+      .wavesurfer-container {
+            width: 400px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 0 auto;
+            grid-area: audio;
+            background-color: transparent;
+        }
+
+       .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+       .pagination a {
+            padding: 8px 16px;
+            margin: 0 4px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+       .pagination a.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+       .pagination-input {
+            width: 50px;
+            margin: 0 10px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+
+<body>
+<div class="header">
+    <a th:href="@{/admin/add}">新增用户</a> &nbsp;
+</div>
+
+<div class="search-form">
+    <form th:action="@{/admin/search}" method="POST">
+        <input type="text" name="text" placeholder="输入id或用户名">
+        <input type="submit" value="查询">
+    </form>
+</div>
+
+<div class="table-container">
+    <table border="1" id="studentTable">
+        <thead>
+        <tr>
+            <th>id</th>
+            <th>用户名</th>
+            <th>密码</th>
+            <th>身份</th>
+            <th>操作</th>
+        </tr>
+        </thead>
+        <tbody id="studentTableBody">
+        <tr th:each="user: ${userList}">
+            <td th:text="${user.id}"></td>
+            <td th:text="${user.Username}"></td>
+            <td th:text="${user.password}"></td>
+            <td th:text="${user.identity}"></td>
+            <td>
+                <a th:href="@{/admin/delete(id=${user.id})}">删除</a>
+                <a th:href="@{/admin/edit{id}(id=${user.id})}">编辑</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="pagination" id="pagination"></div>
+
+<script>
+    // 每页显示的学生数量
+    const studentsPerPage = 10;
+    let currentPage = 1;
+
+    function renderPagination() {
+        const totalPages = Math.ceil(Array.from(document.querySelectorAll('tr')).length / studentsPerPage);
+        const paginationDiv = document.getElementById('pagination');
+        paginationDiv.innerHTML = '';
+
+        // 添加“上一页”按钮
+        const prevLink = document.createElement('a');
+        prevLink.href = "#";
+        prevLink.textContent = "上一页";
+        prevLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (currentPage > 1) {
+                currentPage--;
+                updatePage();
+            }
+        });
+        paginationDiv.appendChild(prevLink);
+
+        for (let i = 1; i <= totalPages; i++) {
+            const link = document.createElement('a');
+            link.href = "#";
+            link.textContent = i;
+            if (i === currentPage) {
+                link.classList.add('active');
+            }
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                currentPage = parseInt(this.textContent);
+                updatePage();
+            });
+            paginationDiv.appendChild(link);
+        }
+
+        // 添加“下一页”按钮
+        const nextLink = document.createElement('a');
+        nextLink.href = "#";
+        nextLink.textContent = "下一页";
+        nextLink.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (currentPage < totalPages) {
+                currentPage++;
+                updatePage();
+            }
+        });
+        paginationDiv.appendChild(nextLink);
+
+        // 添加输入页码跳转的输入框及按钮
+        const input = document.createElement('input');
+        input.type = "text"
+        input.classList.add('pagination-input');
+        const goButton = document.createElement('input');
+        goButton.type = "button";
+        goButton.value = "Go";
+        goButton.addEventListener('click', function () {
+            const inputPage = parseInt(input.value);
+            if (!isNaN(inputPage) && inputPage >= 1 && inputPage <= totalPages) {
+                currentPage = inputPage;
+                updatePage();
+            }
+        });
+        paginationDiv.appendChild(input);
+        paginationDiv.appendChild(goButton);
+    }
+
+    function updatePage() {
+        const tableRows = document.querySelectorAll('tr');
+        const startIndex = (currentPage - 1) * studentsPerPage;
+        const endIndex = startIndex + studentsPerPage;
+        for (let j = 0; j < tableRows.length; j++) {
+            if (j >= startIndex && j < endIndex) {
+                tableRows[j].style.display = '';
+            } else {
+                tableRows[j].style.display = 'none';
+            }
+        }
+        renderPagination();
+    }
+
+    window.onload = function () {
+            const tableRows = document.querySelectorAll('tr');
+            const startIndex = (currentPage - 1) * studentsPerPage;
+            const endIndex = startIndex + studentsPerPage;
+            for (let j = 0; j < tableRows.length; j++) {
+                if (j >= startIndex && j < endIndex) {
+                    tableRows[j].style.display = '';
+                } else {
+                    tableRows[j].style.display = 'none';
+                }
+            }
+            renderPagination();
+        }
+</script>
+</body>
+
+</html>
